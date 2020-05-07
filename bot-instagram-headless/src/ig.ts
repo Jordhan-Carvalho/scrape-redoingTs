@@ -1,10 +1,10 @@
 import playwright from "playwright-chromium";
 
 export class Instagram {
-  crBrowser: playwright.ChromiumBrowser | null = null;
-  crContext: playwright.ChromiumBrowserContext | null = null;
-  crPage: playwright.Page | null = null;
-  url = "https://instagram.com";
+  private crBrowser: playwright.ChromiumBrowser | null = null;
+  private crContext: playwright.ChromiumBrowserContext | null = null;
+  private crPage: playwright.Page | null = null;
+  private url = "https://instagram.com";
 
   constructor() {}
 
@@ -44,36 +44,37 @@ export class Instagram {
       // Go to the tag page
       await this.crPage?.waitForTimeout(1000);
       const tagUrl = `https://www.instagram.com/explore/tags/${tag}/`;
-      await this.crPage?.goto(tagUrl);
-      await this.crPage?.waitForTimeout(1000);
+      await this.crPage?.goto(tagUrl, { waitUntil: "networkidle" });
       // Save posts on the recent div
       const posts = await this.crPage?.$$(
         'article > div:nth-child(3) img[decoding="auto"]'
       );
+
       for (let i = 0; i < 3; i++) {
-        // const post = posts[i];
-        // click on the post
         //@ts-ignore
-        await posts[i].click();
+        const post = posts[i];
+        // click on the post
+        await post.click({ force: true });
+        console.log("clicou");
         // wait for the modal appear
-        await this.crPage?.waitForSelector(
-          'span[id="react-root"][aria-hidden="true"]'
-        );
-        await this.crPage?.waitForTimeout(2000);
+
+        await this.crPage?.waitForTimeout(1250);
         // check if already likes
-        const isLikable = await this.crPage?.$('span[aria-label="Like"]');
+        const isLikable = await this.crPage?.$('svg[aria-label="Like"]');
         if (isLikable) {
-          await this.crPage?.click('span[aria-label="Like"]');
+          await this.crPage?.click('svg[aria-label="Like"]');
         }
         await this.crPage?.waitForTimeout(3000);
         // close modal
-        const closedModalButton = await this.crPage?.$$(
-          `xpath=${'//button[contains(text(), "Close")]'}`
+        const closedModalButton = await this.crPage?.$(
+          'svg[aria-label="Close"]'
         );
         //@ts-ignore
-        await closedModalButton[0].click();
+        await closedModalButton.click();
         await this.crPage?.waitForTimeout(1000);
+        console.log("Terminou de checar a foto");
       }
+      console.log("Terminou a tag esperar 10 sec e comeca a outra");
       await this.crPage?.waitForTimeout(10000);
     }
   }
